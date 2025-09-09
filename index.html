@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Architect | AI/ML Engineer Portfolio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;300;400;500;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-cyan: #00ffff;
+            --primary-purple: #8b5cf6;
+            --primary-pink: #ec4899;
+            --bg-dark: #0a0a0f;
+            --bg-darker: #050508;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            line-height: 1.6;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-darker);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-purple));
+            border-radius: 10px;
+        }
+
+        /* Matrix Background */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.08;
+        }
+
+        /* 3D Neural Network Canvas */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-darker);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 1s ease-out;
+        }
+
+        .loader {
+            text-align: center;
+        }
+
+        .loader-text {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: var(--primary-cyan);
+            animation: pulse 2s infinite;
+        }
+
+        .loader-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loader-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple));
+            border-radius: 10px;
+            animation: loadProgress 3s ease-out forwards;
+        }
+
+        @keyframes loadProgress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* AI Terminal Interface */
+        .terminal {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 420px;
+            height: 220px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--primary-cyan);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .terminal:hover {
+            box-shadow: 0 12px 48px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .terminal-header {
+            color: var(--primary-cyan);
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--primary-cyan);
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .btn-close { background: #ff5f56; }
+        .btn-minimize { background: #ffbd2e; }
+        .btn-maximize { background: #27ca3f; }
+
+        .terminal-content {
+            height: 140px;
+            overflow-y: auto;
+            color: var(--primary-cyan);
+            line-height: 1.4;
+        }
+
+        .typing-line {
+            opacity: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2px solid var(--primary-cyan);
+            animation: typeWriter 1s steps(40) forwards, blinkCursor 1s infinite;
+            margin-bottom: 4px;
+        }
+
+        @keyframes typeWriter {
+            from { width: 0; opacity: 1; }
+            to { width: 100%; opacity: 1; }
+        }
+
+        @keyframes blinkCursor {
+            50% { border-color: transparent; }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .nav-item {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass-bg);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            font-size: 1.5rem;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .nav-item:hover::before {
+            left: 100%;
+        }
+
+        .nav-item:hover {
+            color: var(--primary-cyan);
+            border-color: var(--primary-cyan);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .nav-tooltip {
+            position: absolute;
+            right: 80px;
+            background: var(--bg-darker);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            border: 1px solid var(--glass-border);
+        }
+
+        .nav-item:hover .nav-tooltip {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            padding: 0 40px;
+        }
+
+        .glitch-title {
+            font-size: clamp(4rem, 12vw, 8rem);
+            font-weight: 900;
+            margin-bottom: 30px;
+            position: relative;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            animation: glitch 3s infinite;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .glitch-title::before,
+        .glitch-title::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch-title::before {
+            animation: glitch-1 3s infinite;
+            color: var(--primary-pink);
+            z-index: -1;
+        }
+
+        .glitch-title::after {
+            animation: glitch-2 3s infinite;
+            color: var(--primary-cyan);
+            z-index: -2;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            10% { transform: translate(-2px, 2px); }
+            20% { transform: translate(2px, -2px); }
+            30% { transform: translate(-2px, -2px); }
+            40% { transform: translate(2px, 2px); }
+            50% { transform: translate(0); }
+        }
+
+        @keyframes glitch-1 {
+            0%, 100% { transform: translate(0); }
+            10% { transform: translate(2px, -2px); }
+            20% { transform: translate(-2px, 2px); }
+            30% { transform: translate(2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            50% { transform: translate(0); }
+        }
+
+        @keyframes glitch-2 {
+            0%, 100% { transform: translate(0); }
+            10% { transform: translate(-2px, 2px); }
+            20% { transform: translate(2px, -2px); }
+            30% { transform: translate(-2px, -2px); }
+            40% { transform: translate(2px, 2px); }
+            50% { transform: translate(0); }
+        }
+
+        .neural-subtitle {
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            margin-bottom: 40px;
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-pink), var(--primary-purple));
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease-in-out infinite;
+            font-weight: 500;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Interactive Brain */
+        .brain-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 60px auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .brain-container:hover {
+            transform: scale(1.05);
+        }
+
+        .brain-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.6));
+            transition: all 0.4s ease;
+        }
+
+        .brain-container:hover .brain-svg {
+            filter: drop-shadow(0 0 50px rgba(0, 255, 255, 0.9));
+        }
+
+        .neural-node {
+            fill: var(--primary-cyan);
+            animation: pulse-node 2s infinite;
+            cursor: pointer;
+        }
+
+        .neural-node:hover {
+            fill: var(--primary-pink);
+            r: 12;
+        }
+
+        @keyframes pulse-node {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .neural-connection {
+            stroke: var(--primary-cyan);
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawPath 5s ease-in-out infinite;
+        }
+
+        @keyframes drawPath {
+            0%, 100% { stroke-dashoffset: 1000; }
+            50% { stroke-dashoffset: 0; }
+        }
+
+        .hero-tagline {
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            margin-top: 30px;
+            opacity: 0.8;
+            animation: fadeInUp 1s ease-out 1.5s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 120px 20px;
+            text-align: center;
+            background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            position: relative;
+        }
+
+        .section-title {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            margin-bottom: 80px;
+            color: var(--primary-cyan);
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 50px 30px;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.8s ease;
+            opacity: 0;
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+            transform: rotate(45deg) translate(30px, 30px);
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary-cyan);
+            box-shadow: 0 20px 60px rgba(0, 255, 255, 0.3);
+            transform: translateY(-15px);
+        }
+
+        .stat-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--primary-cyan);
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .stat-description {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        /* Projects Section */
+        .projects-section {
+            padding: 120px 20px;
+            background: linear-gradient(180deg, transparent 0%, rgba(236, 72, 153, 0.05) 50%, transparent 100%);
+        }
+
+        .projects-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 50px;
+            margin-top: 60px;
+        }
+
+        .project-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transition: left 0.8s;
+        }
+
+        .project-card:hover::before {
+            left: 100%;
+        }
+
+        .project-card:hover {
+            border-color: var(--primary-cyan);
+            box-shadow: 0 25px 80px rgba(0, 255, 255, 0.2);
+            transform: translateY(-20px) rotateX(2deg);
+        }
+
+        .project-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .project-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--primary-cyan);
+            font-weight: 600;
+        }
+
+        .project-description {
+            opacity: 0.8;
+            line-height: 1.7;
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .tech-tag {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            color: var(--primary-purple);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tech-tag:hover {
+            background: rgba(139, 92, 246, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .project-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .project-link {
+            padding: 12px 24px;
+            border: 1px solid var(--primary-cyan);
+            border-radius: 25px;
+            text-decoration: none;
+            color: var(--primary-cyan);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .project-link:hover {
+            background: var(--primary-cyan);
+            color: var(--bg-dark);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        /* Skills Section */
+        .skills-section {
+            padding: 120px 20px;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 255, 255, 0.05) 50%, transparent 100%);
+        }
+
+        .skills-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 50px;
+            margin-top: 60px;
+        }
+
+        .skill-category {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .skill-category:hover {
+            border-color: var(--primary-cyan);
+            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.2);
+        }
+
+        .skill-category h3 {
+            color: var(--primary-cyan);
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .skill-item {
+            margin-bottom: 25px;
+        }
+
+        .skill-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .skill-name {
+            font-weight: 500;
+        }
+
+        .skill-percentage {
+            color: var(--primary-cyan);
+            font-weight: 600;
+        }
+
+        .skill-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .skill-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple));
+            border-radius: 10px;
+            position: relative;
+            animation: fillBar 2s ease-out;
+        }
+
+        @keyframes fillBar {
+            from { width: 0; }
+        }
+
+        .skill-progress::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8));
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-30px); }
+            100% { transform: translateX(30px); }
+        }
+
+        /* Contact Section */
+        .contact-section {
+            padding: 120px 20px;
+            text-align: center;
+            background: radial-gradient(ellipse at center, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+        }
+
+        .contact-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .contact-description {
+            margin-bottom: 60px;
+            opacity: 0.8;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .contact-form {
+            display: grid;
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 20px 25px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-purple));
+            border: none;
+            padding: 20px 50px;
+            border-radius: 50px;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            box-shadow: 0 15px 50px rgba(0, 255, 255, 0.4);
+            transform: translateY(-5px);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .social-link {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+        }
+
+        .social-link:hover {
+            color: var(--primary-cyan);
+            border-color: var(--primary-cyan);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 20px;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .terminal {
+                width: calc(100% - 40px);
+                max-width: 420px;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .projects-grid {
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                right: 20px;
+                flex-direction: row;
+                top: auto;
+                bottom: 20px;
+                transform: none;
+                gap: 15px;
+            }
+            
+            .nav-item {
+                width: 60px;
+                height: 60px;
+                font-size: 1.2rem;
+            }
+            
+            .nav-tooltip {
+                display: none;
+            }
+            
+            .hero-content {
+                padding: 0 20px;
+            }
+            
+            .brain-container {
+                width: 280px;
+                height: 280px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+            
+            .stat-card {
+                padding: 40px 20px;
+            }
+            
+            .stat-number {
+                font-size: 3rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .project-card {
+                margin: 0 10px;
+            }
+
+            .terminal {
+                position: relative;
+                width: calc(100% - 20px);
+                margin: 20px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .project-card {
+                padding: 30px 20px;
+                margin: 0;
+            }
+            
+            .social-links {
+                gap: 20px;
+            }
+
+            .hero-content {
+                padding: 0 15px;
+            }
+
+            .glitch-title {
+                font-size: clamp(2.5rem, 10vw, 6rem);
+            }
+
+            .neural-subtitle {
+                font-size: clamp(1.2rem, 6vw, 2rem);
+            }
+
+            .brain-container {
+                width: 250px;
+                height: 250px;
+            }
+
+            .section-title {
+                font-size: clamp(2rem, 8vw, 3.5rem);
+                margin-bottom: 60px;
+            }
+
+            .terminal {
+                position: static;
+                width: 100%;
+                margin: 20px 0;
+                height: auto;
+                min-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader">
+            <div class="loader-text">INITIALIZING NEURAL NETWORKS</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Background -->
+    <canvas id="matrix-bg"></canvas>
+
+    <!-- 3D Neural Network -->
+    <canvas id="neural-canvas"></canvas>
+
+    <!-- AI Terminal -->
+    <div class="terminal">
+        <div class="terminal-header">
+            <span>NEURAL_SYSTEM_v3.0 > Active</span>
+            <div class="terminal-controls">
+                <div class="terminal-btn btn-close"></div>
+                <div class="terminal-btn btn-minimize"></div>
+                <div class="terminal-btn btn-maximize"></div>
+            </div>
+        </div>
+        <div class="terminal-content" id="terminal-output">
+            <div class="typing-line" style="animation-delay: 0.5s;">> Loading AI frameworks... [████████████] 100%</div>
+            <div class="typing-line" style="animation-delay: 1.5s;">> TensorFlow 2.13.0 initialized</div>
+            <div class="typing-line" style="animation-delay: 2.5s;">> PyTorch 2.0.1 ready</div>
+            <div class="typing-line" style="animation-delay: 3.5s;">> Neural networks activated</div>
+            <div class="typing-line" style="animation-delay: 4.5s;">> Ready for innovation_</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="#home" class="nav-item">
+            🏠
+            <span class="nav-tooltip">Home</span>
+        </a>
+        <a href="#projects" class="nav-item">
+            🚀
+            <span class="nav-tooltip">Projects</span>
+        </a>
+        <a href="#skills" class="nav-item">
+            🧠
+            <span class="nav-tooltip">Skills</span>
+        </a>
+        <a href="#contact" class="nav-item">
+            📬
+            <span class="nav-tooltip">Contact</span>
+        </a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1 class="glitch-title" data-text="SANJNA BALI">SANJNA BALI</h1>
+            <p class="neural-subtitle">Building Intelligence • One Algorithm at a Time</p>
+            <p class="loader-text" style="margin-top: 10px; font-size: 30; opacity: 0.7;">AI/ML Engineer & Researcher</p>
+            <!-- Interactive Brain -->
+            <div class="brain-container" onclick="activateBrain()" onmouseenter="brainHover()" onmouseleave="brainLeave()">
+                <svg class="brain-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Neural Network Structure -->
+                    <g class="neural-network">
+                        <!-- Connections -->
+                        <path class="neural-connection" d="M80,120 Q200,80 320,120" style="animation-delay: 0s;"/>
+                        <path class="neural-connection" d="M80,200 Q200,160 320,200" style="animation-delay: 0.5s;"/>
+                        <path class="neural-connection" d="M80,280 Q200,240 320,280" style="animation-delay: 1s;"/>
+                        <path class="neural-connection" d="M80,120 Q150,200 80,280" style="animation-delay: 1.5s;"/>
+                        <path class="neural-connection" d="M320,120 Q250,200 320,280" style="animation-delay: 2s;"/>
+                        <path class="neural-connection" d="M140,160 Q200,200 260,240" style="animation-delay: 2.5s;"/>
+                        
+                        <!-- Input Layer Nodes -->
+                        <circle class="neural-node" cx="80" cy="120" r="8" onclick="nodeClick(this)"/>
+                        <circle class="neural-node" cx="80" cy="200" r="10" onclick="nodeClick(this)"/>
+                        <circle class="neural-node" cx="80" cy="280" r="8" onclick="nodeClick(this)"/>
+                        
+                        <!-- Hidden Layer Nodes -->
+                        <circle class="neural-node" cx="200" cy="100" r="6" onclick="nodeClick(this)" style="animation-delay: 0.3s;"/>
+                        <circle class="neural-node" cx="200" cy="160" r="12" onclick="nodeClick(this)" style="animation-delay: 0.6s;"/>
+                        <circle class="neural-node" cx="200" cy="220" r="8" onclick="nodeClick(this)" style="animation-delay: 0.9s;"/>
+                        <circle class="neural-node" cx="200" cy="280" r="6" onclick="nodeClick(this)" style="animation-delay: 1.2s;"/>
+                        <circle class="neural-node" cx="200" cy="320" r="8" onclick="nodeClick(this)" style="animation-delay: 1.5s;"/>
+                        
+                        <!-- Output Layer Nodes -->
+                        <circle class="neural-node" cx="320" cy="120" r="8" onclick="nodeClick(this)" style="animation-delay: 1.8s;"/>
+                        <circle class="neural-node" cx="320" cy="200" r="14" onclick="nodeClick(this)" style="animation-delay: 2.1s;"/>
+                        <circle class="neural-node" cx="320" cy="280" r="8" onclick="nodeClick(this)" style="animation-delay: 2.4s;"/>
+                    </g>
+                </svg>
+            </div>
+            
+            <p class="hero-tagline">
+                Full Stack Developer • AI/ML Engineer • Neural Network Specialist<br>
+                <span style="color: var(--primary-cyan); font-weight: 600;">Transforming Ideas into Intelligent Solutions</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <h2 class="section-title">NEURAL METRICS</h2>
+        <div class="stats-grid">
+            <div class="stat-card" onclick="statCardClick(this)">
+                <div class="stat-number" data-target="10">0</div>
+                <div class="stat-label">ML, Deep Learning, AI Projects</div>
+                <div class="stat-description">Deep learning architectures across computer vision, NLP, and predictive analytics</div>
+            </div>
+            <div class="stat-card" onclick="statCardClick(this)">
+                <div class="stat-number" data-target="1">0</div>
+                <div class="stat-label">Forecasting Analysis on Kaggle</div>
+                <div class="stat-description">Using Time Series Forecasting Arima, SARIMA Model</div>
+            </div>
+            <div class="stat-card" onclick="statCardClick(this)">
+                <div class="stat-number" data-target="80-90">0</div>
+                <div class="stat-label">Model Accuracy %</div>
+                <div class="stat-description">Consistently achieving state-of-the-art performance metrics</div>
+            </div>
+            <div class="stat-card" onclick="statCardClick(this)">
+                <div class="stat-number" data-target="3">0</div>
+                <div class="stat-label">Years Experience</div>
+                <div class="stat-description">Expertise spanning research, development, and deployment</div>
+            </div>
+            <div class="stat-card" onclick="statCardClick(this)">
+                <div class="stat-number" data-target="241">0</div>
+                <div class="stat-label">Commits on Github</div>
+                <div class="stat-description">Commits along with 13 repositories</div>
+            </div>
+            <div class="stat-card" onclick="statCardClick(this)">
+                <div class="stat-number" data-target="50+">0</div>
+                <div class="stat-label">Hours on Coding Platforms</div>
+                <div class="stat-description">Extensive problem-solving on LeetCode, HackerRank</div>
+            </div>
+            <div class="stat-card" onclick="statCardClick(this)">
+                <div class="stat-number" data-target="5+">0</div>
+                <div class="stat-label">Competitions</div>
+                <div class="stat-description">Participated in various Competitions in university and online platforms</div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section class="projects-section" id="projects">
+        <div class="projects-container">
+            <h2 class="section-title">NEURAL PROJECTS</h2>
+            <div class="projects-grid">
+                <div class="project-card" onclick="projectCardClick(this)">
+                    <div class="project-icon">🤖</div>
+                    <h3 class="project-title">Material Science Domain Specific AI Rag Chatbot</h3>
+                    <p class="project-description">
+                        Engineered a Python-based Retrieval-Augmented Generation (RAG) query agent integrating FAISS, improving research query accuracy by 33% and reducing latency by 50%.
+                        Optimized throughput by 2x, automated workflows to reduce manual effort by 40%, and cut processing time from 10 minutes to 3 minutes.
+                    </p>
+                    <div class="tech-stack">
+                        <span class="tech-tag">TensorFlow</span>
+                        <span class="tech-tag">Gemini</span>
+                        <span class="tech-tag">Bert</span>
+                        <span class="tech-tag">RAG</span>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">FAISS</span>
+                        <span class="tech-tag">LangChain</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">LLMS</span>
+                        <span class="tech-tag">VectorDB</span>
+                        <vector class="tech-tag">NLP</vector>
+                        <vector class="tech-tag">ML</vector>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link">GitHub</a>
+                    </div>
+                </div>
+                
+                <div class="project-card" onclick="projectCardClick(this)">
+                    <div class="project-icon">🧠</div>
+                    <h3 class="project-title">Multimodal AI Studion In working Phase</h3>
+                    <p class="project-description">
+                        Cutting-edge conversational AI combining vision, text, and speech processing. Features custom fine-tuned 
+                        transformer models with retrieval-augmented generation (RAG) for domain-specific knowledge.
+                    </p>
+                    <div class="tech-stack">
+                        <span class="tech-tag">Transformers</span>
+                        <span class="tech-tag">Sentence-Transformers</span>
+                        <span class="tech-tag">Whisper</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">Vector DB</span>
+                        <span class="tech-tag">TypeScript</span>
+                        <span class="tech-tag">Vue</span>
+                        <span class="tech-tag">Docker</span>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">HTML and CSS</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link">Github</a>
+                        
+                    </div>
+                </div>
+                
+                <div class="project-card" onclick="projectCardClick(this)">
+                    <div class="project-icon">📈</div>
+                    <h3 class="project-title">Federated Learning in Brain Tumor Detection</h3>
+                    <p class="project-description">
+                        Personalized Federated Swin-UNETR with MAE pretraining + communication-efficient distillation for privacy-preserving brain-tumor segmentation.
+                        Currently Research Paper under Work.
+                    </p>
+                    <div class="tech-stack">
+                        <span class="tech-tag">TensorFlow</span>
+                        <span class="tech-tag">Computer Vision</span>
+                        <span class="tech-tag">NumPy</span>
+                        <span class="tech-tag">Federated Learning Flower</span>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Medical Imaging</span>
+                        <span class="tech-tag">Swin-UNETR</span>
+                        <span class="tech-tag">MAE</span>
+                        <span class="tech-tag">Segmentation</span>
+                        <span class="tech-tag">Classification</span>
+                        <span class="tech-tag">Privacy-preserving</span>
+                        <span class="tech-tag">BlockChain</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link">Research Paper</a>
+                        <a href="#" class="project-link">Source Code</a>
+                    </div>
+                </div>
+                
+                <div class="project-card" onclick="projectCardClick(this)">
+                    <div class="project-icon">🎮</div>
+                    <h3 class="project-title">AI-Powered Chest-Xray Interpreter</h3>
+                    <p class="project-description">
+                        Built a GenAI-powered assistant using RAG to interpret Chest X-rays and medical PDFs.  
+                        Leveraged Google Gemini and Chroma DB for real-time, multimodal medical Q&A. 
+                    <div class="tech-stack">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">AI</span>
+                        <span class="tech-tag">Gemini</span>
+                        <span class="tech-tag">ChromaDB</span>
+                        <span class="tech-tag">SQL</span>
+                        <span class="tech-tag">Function Calling</span>
+                        <span class="tech-tag">RAG</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link">Kaggle Competition</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section class="skills-section" id="skills">
+        <div class="skills-container">
+            <h2 class="section-title">NEURAL CAPABILITIES</h2>
+            <div class="skills-grid">
+                <div class="skill-category">
+                    <h3>🤖 Machine Learning & AI</h3>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Deep Learning</span>
+                            <span class="skill-percentage">70%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 96%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Computer Vision</span>
+                            <span class="skill-percentage">84%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 94%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Natural Language Processing</span>
+                            <span class="skill-percentage">92%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 92%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Python</span>
+                            <span class="skill-percentage">90%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 88%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skill-category">
+                    <h3>🔬 Frameworks & Libraries</h3>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">PyTorch</span>
+                            <span class="skill-percentage">50%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 95%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">TensorFlow</span>
+                            <span class="skill-percentage">75%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 93%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Scikit-learn</span>
+                            <span class="skill-percentage">97%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 97%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Hugging Face</span>
+                            <span class="skill-percentage">80%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 91%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skill-category">
+                    <h3>💻 Coding Languages</h3>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Python</span>
+                            <span class="skill-percentage">80%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 98%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">c++</span>
+                            <span class="skill-percentage">99%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 89%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">HTML</span>
+                            <span class="skill-percentage">87%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 87%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">PostgreSQL</span>
+                            <span class="skill-percentage">85%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 85%"></div>
+                        </div>
+                    </div>
+
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">JavaScript</span>
+                            <span class="skill-percentage">70%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 75%"></div>
+                        </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">SQL</span>
+                            <span class="skill-percentage">70%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 75%"></div>
+                        </div>
+
+                </div>
+
+                
+                <div class="skill-category">
+                    <h3>☁️ Cloud & DevOps</h3>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Github</span>
+                            <span class="skill-percentage">90%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 90%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">Docker</span>
+                            <span class="skill-percentage">60</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 88%"></div>
+                        </div>
+                    </div>
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <span class="skill-name">MLOps</span>
+                            <span class="skill-percentage">30%</span>
+                        </div>
+                        <div class="skill-bar">
+                            <div class="skill-progress" style="width: 86%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact">
+        <div class="contact-content">
+            <h2 class="section-title">NEURAL CONNECTION</h2>
+            <p class="contact-description">
+                Ready to revolutionize your business with cutting-edge AI solutions? 
+                Let's collaborate and build the future of intelligent technology together.
+            </p>
+            
+            <form class="contact-form" onsubmit="sendMessage(event)">
+                <div class="form-group">
+                    <input type="text" class="form-input" placeholder="Your Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" class="form-input" placeholder="Your Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-input" placeholder="Subject" required>
+                </div>
+                <div class="form-group">
+                    <textarea class="form-input" placeholder="Tell me about your AI vision..." required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">TRANSMIT MESSAGE</button>
+            </form>
+            
+            <div class="social-links">
+                <a href="#" class="social-link" title="LinkedIn">💼</a>
+                <a href="#" class="social-link" title="GitHub">🐙</a>
+                <a href="#" class="social-link" title="Twitter">🐦</a>
+                <a href="#" class="social-link" title="Email">📧</a>
+                <a href="#" class="social-link" title="Medium">📝</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 AI Architect. Crafted with neural precision and quantum creativity.</p>
+        <p style="opacity: 0.7; margin-top: 10px;">Building tomorrow's intelligence, today.</p>
+    </footer>
+
+    <script>
+        // Performance optimization
+        let isInteractionsInitialized = false;
+        let scene, camera, renderer, neurons = [], connections = [];
+        let mouseX = 0, mouseY = 0;
+        let animationId;
+
+        // Loading Screen with faster load time
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loading-screen');
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    initializeInteractions();
+                }, 500);
+            }, 2000);
+        });
+
+        function initializeInteractions() {
+            if (isInteractionsInitialized) return;
+            isInteractionsInitialized = true;
+
+            initMatrixBackground();
+            init3D();
+            updateTerminal();
+            initIntersectionObserver();
+        }
+
+        // Optimized Matrix Background Animation
+        function initMatrixBackground() {
+            const canvas = document.getElementById('matrix-bg');
+            const ctx = canvas.getContext('2d');
+            let animationId;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}АИ机器学习";
+            const matrixArray = matrix.split("");
+            const fontSize = 12;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+
+            for(let x = 0; x < columns; x++) {
+                drops[x] = 1;
+            }
+
+            function drawMatrix() {
+                ctx.fillStyle = 'rgba(10, 10, 15, 0.04)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#00ffff';
+                ctx.font = fontSize + 'px JetBrains Mono, monospace';
+                
+                for(let i = 0; i < drops.length; i++) {
+                    const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+
+                animationId = requestAnimationFrame(drawMatrix);
+            }
+
+            drawMatrix();
+
+            // Pause matrix when tab is not visible
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    cancelAnimationFrame(animationId);
+                } else {
+                    drawMatrix();
+                }
+            });
+        }
+
+        // Optimized 3D Neural Network Visualization
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('neural-canvas'),
+                alpha: true,
+                antialias: false, // Disable for better performance
+                powerPreference: "high-performance"
+            });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio
+
+            // Create neural network nodes with reduced geometry complexity
+            const nodeGeometry = new THREE.SphereGeometry(1.5, 8, 6); // Reduced segments
+            
+            const layers = [6, 8, 10, 8, 4];
+            let nodeIndex = 0;
+
+            layers.forEach((nodeCount, layerIndex) => {
+                for(let i = 0; i < nodeCount; i++) {
+                    const nodeMaterial = new THREE.MeshBasicMaterial({ 
+                        color: new THREE.Color().setHSL((layerIndex * 0.2) % 1, 0.8, 0.6),
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    
+                    const neuron = new THREE.Mesh(nodeGeometry, nodeMaterial);
+                    neuron.position.x = (layerIndex - 2) * 120;
+                    neuron.position.y = (i - (nodeCount - 1) / 2) * 40;
+                    neuron.position.z = Math.sin(nodeIndex * 0.5) * 30;
+                    
+                    neurons.push(neuron);
+                    scene.add(neuron);
+                    nodeIndex++;
+                }
+            });
+
+            // Create connections with optimized line rendering
+            const lineMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.4
+            });
+
+            let startIndex = 0;
+            for(let layer = 0; layer < layers.length - 1; layer++) {
+                const currentLayerSize = layers[layer];
+                const nextLayerSize = layers[layer + 1];
+                
+                for(let i = 0; i < currentLayerSize; i++) {
+                    for(let j = 0; j < nextLayerSize; j++) {
+                        const geometry = new THREE.BufferGeometry();
+                        const currentNeuron = neurons[startIndex + i];
+                        const nextNeuron = neurons[startIndex + currentLayerSize + j];
+                        
+                        const positions = new Float32Array([
+                            currentNeuron.position.x, currentNeuron.position.y, currentNeuron.position.z,
+                            nextNeuron.position.x, nextNeuron.position.y, nextNeuron.position.z
+                        ]);
+                        
+                        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                        const line = new THREE.Line(geometry, lineMaterial);
+                        connections.push(line);
+                        scene.add(line);
+                    }
+                }
+                startIndex += currentLayerSize;
+            }
+
+            camera.position.z = 300;
+            camera.position.y = 0;
+            
+            animate3D();
+        }
+
+        function animate3D() {
+            animationId = requestAnimationFrame(animate3D);
+            
+            // Reduced animation complexity for better performance
+            scene.rotation.x += 0.003;
+            scene.rotation.y += 0.007;
+            
+            // Simplified mouse interaction
+            scene.rotation.x += (mouseY * 0.0003);
+            scene.rotation.y += (mouseX * 0.0003);
+            
+            // Animate fewer neurons for better performance
+            const time = Date.now() * 0.001;
+            for(let i = 0; i < neurons.length; i += 2) { // Skip every other neuron
+                const neuron = neurons[i];
+                neuron.position.z += Math.sin(time + i) * 0.3;
+                neuron.material.opacity = 0.6 + Math.sin(time * 0.002 + i) * 0.2;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Optimized mouse tracking
+        let mouseTrackingTimeout;
+        document.addEventListener('mousemove', (event) => {
+            clearTimeout(mouseTrackingTimeout);
+            mouseTrackingTimeout = setTimeout(() => {
+                mouseX = (event.clientX - window.innerWidth / 2) * 0.01;
+                mouseY = (event.clientY - window.innerHeight / 2) * 0.01;
+            }, 16); // Throttle to ~60fps
+        });
+
+        // Optimized window resize handler
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (camera && renderer) {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }
+            }, 250);
+        });
+
+        // Terminal typing animation with cycling content
+        function updateTerminal() {
+            const terminalLines = [
+                ">> Initializing consciousness matrix...",
+                ">> Loading quantum algorithms...",
+                ">> Calibrating neural pathways...",
+                ">> Optimizing decision trees...",
+                ">> Ready for cognitive enhancement_"
+            ];
+
+            const terminal = document.getElementById('terminal-output');
+            terminal.innerHTML = '';
+            
+            terminalLines.forEach((line, index) => {
+                const div = document.createElement('div');
+                div.className = 'typing-line';
+                div.style.animationDelay = `${index * 1}s`;
+                div.textContent = line;
+                terminal.appendChild(div);
+            });
+            
+            // Cycle terminal content every 8 seconds
+            setTimeout(() => {
+                const newLines = [
+                    ">> Scanning neural patterns...",
+                    ">> Processing deep learning models...",
+                    ">> Analyzing data structures...",
+                    ">> Optimizing AI performance...",
+                    ">> System operating at peak efficiency_"
+                ];
+                updateTerminalContent(newLines);
+            }, 8000);
+        }
+
+        function updateTerminalContent(lines) {
+            const terminal = document.getElementById('terminal-output');
+            terminal.innerHTML = '';
+            
+            lines.forEach((line, index) => {
+                const div = document.createElement('div');
+                div.className = 'typing-line';
+                div.style.animationDelay = `${index * 1}s`;
+                div.textContent = line;
+                terminal.appendChild(div);
+            });
+
+            setTimeout(() => updateTerminal(), 8000);
+        }
+
+        // Intersection Observer for performance optimization
+        function initIntersectionObserver() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '50px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                        if (entry.target.classList.contains('stat-card')) {
+                            animateStatNumbers(entry.target);
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            // Observe stat cards for animation
+            document.querySelectorAll('.stat-card').forEach(card => {
+                observer.observe(card);
+            });
+        }
+
+        // Animate stat numbers when they come into view
+        function animateStatNumbers(card) {
+            const number = card.querySelector('.stat-number');
+            const target = parseInt(number.getAttribute('data-target'));
+            const duration = 2000;
+            const start = performance.now();
+
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(target * easeOutCubic(progress));
+                number.textContent = current;
+
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                }
+            }
+
+            requestAnimationFrame(updateNumber);
+        }
+
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        // Interactive Functions
+        function activateBrain() {
+            const brain = document.querySelector('.brain-svg');
+            const container = document.querySelector('.brain-container');
+            
+            brain.style.transform = 'scale(1.1) rotate(5deg)';
+            brain.style.filter = 'drop-shadow(0 0 60px rgba(0, 255, 255, 1))';
+            
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle, rgba(0, 255, 255, 0.3), transparent);
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                animation: ripple 1s ease-out;
+                pointer-events: none;
+                z-index: 1;
+            `;
+            
+            // Add ripple animation if not already added
+            if (!document.querySelector('#ripple-style')) {
+                const style = document.createElement('style');
+                style.id = 'ripple-style';
+                style.textContent = `
+                    @keyframes ripple {
+                        0% { width: 100px; height: 100px; opacity: 1; }
+                        100% { width: 400px; height: 400px; opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            container.appendChild(ripple);
+            
+            setTimeout(() => {
+                brain.style.transform = '';
+                brain.style.filter = '';
+                if (ripple.parentNode) {
+                    ripple.remove();
+                }
+            }, 1000);
+        }
+
+        function brainHover() {
+            document.querySelectorAll('.neural-node').forEach(node => {
+                node.style.fill = '#ff6b6b';
+                node.setAttribute('r', '12');
+            });
+        }
+
+        function brainLeave() {
+            document.querySelectorAll('.neural-node').forEach(node => {
+                node.style.fill = '#00ffff';
+                node.setAttribute('r', node.getAttribute('r') || '8');
+            });
+        }
+
+        function nodeClick(node) {
+            node.style.fill = '#ff9ff3';
+            node.setAttribute('r', '16');
+            
+            // Create particle explosion effect
+            const rect = node.getBoundingClientRect();
+            createParticleExplosion(rect.left + rect.width/2, rect.top + rect.height/2);
+            
+            setTimeout(() => {
+                node.style.fill = '#00ffff';
+                node.setAttribute('r', '8');
+            }, 500);
+        }
+
+        function createParticleExplosion(x, y) {
+            for(let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: fixed;
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: 4px;
+                    height: 4px;
+                    background: #00ffff;
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1000;
+                `;
+                
+                document.body.appendChild(particle);
+                
+                const angle = (i / 12) * Math.PI * 2;
+                const velocity = 100;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity;
+                
+                particle.animate([
+                    { transform: 'translate(0, 0)', opacity: 1 },
+                    { transform: `translate(${vx}px, ${vy}px)`, opacity: 0 }
+                ], {
+                    duration: 1000,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }).addEventListener('finish', () => {
+                    if (particle.parentNode) {
+                        particle.remove();
+                    }
+                });
+            }
+        }
+
+        // Stat card interactions
+        function statCardClick(card) {
+            card.style.transform = 'translateY(-25px) scale(1.05)';
+            card.style.boxShadow = '0 30px 80px rgba(0, 255, 255, 0.4)';
+            
+            setTimeout(() => {
+                card.style.transform = '';
+                card.style.boxShadow = '';
+            }, 300);
+        }
+
+        // Project card interactions
+        function projectCardClick(card) {
+            card.style.transform = 'translateY(-30px) rotateX(5deg) scale(1.02)';
+            card.style.boxShadow = '0 35px 100px rgba(0, 255, 255, 0.3)';
+            
+            setTimeout(() => {
+                card.style.transform = '';
+                card.style.boxShadow = '';
+            }, 400);
+        }
+
+        // Contact form submission
+        function sendMessage(event) {
+            event.preventDefault();
+            const submitBtn = event.target.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.textContent = 'TRANSMITTING...';
+            submitBtn.disabled = true;
+            
+            // Simulate form submission
+            setTimeout(() => {
+                submitBtn.textContent = 'MESSAGE SENT!';
+                submitBtn.style.background = 'linear-gradient(45deg, #00ff00, #008000)';
+                
+                setTimeout(() => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.style.background = '';
+                    submitBtn.disabled = false;
+                    event.target.reset();
+                }, 2000);
+            }, 1500);
+        }
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add active states to navigation
+        function updateActiveNav() {
+            const sections = document.querySelectorAll('section[id]');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === '#' + current) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveNav);
+
+        // Add CSS for active nav state
+        const navStyle = document.createElement('style');
+        navStyle.textContent = `
+            .nav-item.active {
+                color: var(--primary-cyan) !important;
+                border-color: var(--primary-cyan) !important;
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+                transform: scale(1.05);
+            }
+        `;
+        document.head.appendChild(navStyle);
+
+        // Performance monitoring and cleanup
+        let performanceMonitor;
+        
+        function startPerformanceMonitoring() {
+            let frameCount = 0;
+            let lastTime = performance.now();
+            
+            performanceMonitor = setInterval(() => {
+                const currentTime = performance.now();
+                const fps = frameCount / ((currentTime - lastTime) / 1000);
+                
+                // Reduce animations if performance is poor
+                if (fps < 30 && neurons.length > 0) {
+                    // Reduce 3D animation quality
+                    renderer.setPixelRatio(1);
+                    
+                    // Skip more neurons in animation
+                    for(let i = 0; i < neurons.length; i += 3) {
+                        const neuron = neurons[i];
+                        if (neuron.material) {
+                            neuron.material.opacity = 0.6;
+                        }
+                    }
+                }
+                
+                frameCount = 0;
+                lastTime = currentTime;
+            }, 2000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            if (performanceMonitor) {
+                clearInterval(performanceMonitor);
+            }
+            if (renderer) {
+                renderer.dispose();
+            }
+        });
+
+        // Error handling
+        window.addEventListener('error', (e) => {
+            console.warn('Portfolio error caught:', e.message);
+            // Fallback: disable 3D animations if there are errors
+            const neuralCanvas = document.getElementById('neural-canvas');
+            if (neuralCanvas) {
+                neuralCanvas.style.display = 'none';
+            }
+        });
+
+        // Start performance monitoring after initialization
+        setTimeout(startPerformanceMonitoring, 5000);
+
+        // Preload optimization
+        function preloadImages() {
+            const imageUrls = []; // Add any image URLs here if needed
+            imageUrls.forEach(url => {
+                const img = new Image();
+                img.src = url;
+            });
+        }
+
+        // Initialize preloading
+        preloadImages();
+
+        // Touch device optimizations
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+            
+            // Reduce 3D complexity on touch devices
+            const style = document.createElement('style');
+            style.textContent = `
+                .touch-device #neural-canvas {
+                    opacity: 0.3;
+                }
+                .touch-device .terminal {
+                    backdrop-filter: blur(10px);
+                }
+                .touch-device .nav-item:hover {
+                    transform: scale(1.05) rotate(0deg);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    </script>
+</body>
+</html>
